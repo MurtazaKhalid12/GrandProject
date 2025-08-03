@@ -1,0 +1,168 @@
+{
+  "name": "recipe-generator",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a helpful recipe generator. Based on the following ingredients or user description, generate a complete recipe in a clear format with don't use markdown Don’t use bold, asterisks, or bullet points — just write in a clean and simple text format. :\n\n1. Recipe name\n2. Ingredients list\n3. Step-by-step instructions\n\nUser input:\n{{ $json.response.body.body.ingredients }}\n\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        480,
+        -20
+      ],
+      "id": "a9633017-54ca-4358-a4bf-e80c2cef743d",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        560,
+        200
+      ],
+      "id": "198a7287-36d5-4ec2-9553-2abb3814c6be",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "AWE9OoxtGaEJVqmO",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "recipe-generator",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -20,
+        0
+      ],
+      "id": "1562ed77-0bcd-4beb-bdb5-259889ab8fb4",
+      "name": "Webhook",
+      "webhookId": "4286b363-5089-4d81-bc84-4beecc137076"
+    },
+    {
+      "parameters": {
+        "enableResponseOutput": true,
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        220,
+        0
+      ],
+      "id": "fc42217b-baa0-4b15-9a5f-b839a7cf809e",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "tableId": "recipes",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "user_id",
+              "fieldValue": "={{ $('Webhook').item.json.body.user_id }}"
+            },
+            {
+              "fieldId": "ingredients",
+              "fieldValue": "={{ $('Webhook').item.json.body.ingredients }}"
+            },
+            {
+              "fieldId": "instructions",
+              "fieldValue": "={{ $json.text }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        -20
+      ],
+      "id": "432e15f7-2f4c-44ae-ba49-c3489924bd9f",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "fvjIUygo2WjrHFd9",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "sOhwTqlcpzw46dMg"
+  },
+  "versionId": "43207380-4774-4594-b5fc-0c0a01bde5dd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b7cc119b1ae0d9bdbff404eb966f2373a4449ff2ed75fa2306ab74662f214d4b"
+  },
+  "id": "sOhwTqlcpzw46dMg",
+  "tags": []
+}
